@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Таймер и видео</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #timer {
+            font-size: 48px;
+        }
+        #videoContainer {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        #message {
+            display: none;
+            font-size: 32px;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+        #finalMessage {
+            display: none;
+            font-size: 48px;
+            font-weight: bold;
+            color: #0dd3ff; /* Розовый цвет */
+            font-family: 'Pacifico', cursive; /* Шрифт Pacifico */
+            opacity: 0;
+            transition: opacity 2s ease-in-out;
+            letter-spacing: 2px; /* Расстояние между буквами */
+        }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Pacifico&display=swap" rel="stylesheet"> <!-- Подключение шрифта -->
+</head>
+<body>
+
+    <div id="timer"></div>
+    <div id="videoContainer">
+        <video id="video" width="500" height="500" controls>
+            <source src="IMG_6574.MP4" type="video/mp4">
+            Ваш браузер не поддерживает видео.
+        </video>
+    </div>
+    <div id="message">Проверь WhatsApp</div>
+    <div id="finalMessage">Загляни в свой WhatsApp</div>
+
+    <script>
+        // Задайте точную дату и время, до которого идет отсчет (например, 2025-01-20 12:00:00)
+        const targetDate = new Date("2025-01-15T23:54:00").getTime();
+
+        // Функция для обновления таймера
+function updateTimer() {
+    const now = new Date().getTime();
+    const timeLeft = targetDate - now;
+
+    // Рассчитываем оставшееся время
+    const days = String(Math.floor(timeLeft / (1000 * 60 * 60 * 24))).padStart(2, '0');
+    const hours = String(Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+    const minutes = String(Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+    const seconds = String(Math.floor((timeLeft % (1000 * 60)) / 1000)).padStart(2, '0');
+
+    // Обновляем таймер на экране в формате 00:00:00:00
+    document.getElementById('timer').textContent = `${days} : ${hours} : ${minutes} : ${seconds}`;
+
+    // Когда время истечет
+    if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        startVideo();
+        sendTelegramNotification();
+    }
+}
+
+
+        // Функция для старта видео
+        function startVideo() {
+            // Скрываем таймер и сообщение о WhatsApp
+            document.getElementById('timer').style.display = 'none';
+            document.getElementById('message').style.display = 'none';
+
+            const videoContainer = document.getElementById('videoContainer');
+            const video = document.getElementById('video');
+            videoContainer.style.display = 'block';
+            video.play();
+            
+            // После окончания видео скрываем его и показываем финальное сообщение
+            video.onended = function() {
+                setTimeout(() => {
+                    videoContainer.style.display = 'none';
+                    showFinalMessage();
+                }, 1000); // Ждем 1 минуту после окончания видео
+            };
+        }
+
+        // Функция для отображения финального сообщения
+        function showFinalMessage() {
+            const finalMessage = document.getElementById('finalMessage');
+            finalMessage.style.display = 'block';
+            setTimeout(() => {
+                finalMessage.style.opacity = '1'; // Плавное появление
+            }, 100); // Задержка для плавности
+        }
+
+        // Функция для отправки уведомления в Telegram
+        function sendTelegramNotification() {
+            const token = '5124149668:AAGVQmd9ywi_PcF77Dwq60uf6VjXIFTdVlI';
+            const chatId = '1379579817';
+            const message = 'Время истекло! Пожалуйста, проверь WhatsApp.';
+            
+            fetch(`https://api.telegram.org/bot${token}/sendMessage?chat_id=${chatId}&text=${message}`)
+                .then(response => response.json())
+                .then(data => console.log('Telegram notification sent:', data))
+                .catch(error => console.error('Error sending Telegram notification:', error));
+        }
+
+        // Запуск таймера
+        const timerInterval = setInterval(updateTimer, 1000);
+
+    </script>
+
+</body>
+</html>
